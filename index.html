@@ -365,6 +365,11 @@ function saveEntries(entries){localStorage.setItem('cvor_entries',JSON.stringify
 
 // ---- Trip builder ----
 function showOriginPicker(){
+  // If we already have a next origin set (from last leg), skip straight to destinations
+  if(pickingOrigin){
+    showDestPicker();
+    return;
+  }
   show('s1-origin'); hide('s1-main'); hide('s1-dest'); hide('s1-custom');
   document.getElementById('origin-grid').innerHTML=
     [...LOCS,{key:'other',name:'Other location',addr:'Custom — enter name & distance'}].map(l=>`
@@ -426,9 +431,18 @@ function confirmCustom(){
 
 function addLeg(fromName,toName,km,hrs){
   legs.push({fromName,toName,km,hrs});
-  pickingOrigin=null; pickingDest=null;
+  // Remember where we arrived so the next trip starts there automatically
+  const nextOriginKey = pickingDest?.key||null;
+  const nextOriginName = toName;
+  pickingDest=null;
   show('s1-main'); hide('s1-origin'); hide('s1-dest'); hide('s1-custom');
   renderLegs(); updateNav();
+  // Pre-set next origin to last destination
+  if(nextOriginKey && nextOriginKey!=='other'){
+    pickingOrigin = getLoc(nextOriginKey);
+  } else {
+    pickingOrigin = {key:'other', name: nextOriginName};
+  }
 }
 
 function cancelAddTrip(){
