@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="CVOR Log">
+<title>CVOR Log — 2740172 Ontario Inc.</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
+
+  /* ---- Login ---- */
+  #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 32px 24px; }
+  .login-logo { font-size: 13px; font-weight: 600; color: #888; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+  .login-title { font-size: 26px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
+  .login-sub { font-size: 14px; color: #888; margin-bottom: 40px; }
+  .login-box { width: 100%; max-width: 360px; background: #fff; border-radius: 16px; padding: 28px 24px; box-shadow: 0 2px 16px rgba(0,0,0,0.08); }
+  .login-box label { display: block; font-size: 13px; color: #666; margin-bottom: 6px; }
+  .login-box input { width: 100%; padding: 14px 12px; font-size: 16px; border: 1px solid #e0e0e0; border-radius: 10px; background: #fafafa; font-family: inherit; outline: none; margin-bottom: 16px; }
+  .login-box input:focus { border-color: #1a1a1a; background: #fff; }
+  .login-btn { width: 100%; padding: 15px; font-size: 16px; font-weight: 600; background: #1a1a1a; color: #fff; border: none; border-radius: 10px; cursor: pointer; }
+  .login-btn:active { opacity: 0.8; }
+  .login-error { font-size: 13px; color: #c0392b; margin-top: 10px; text-align: center; display: none; }
+
+  /* ---- App shell ---- */
+  #app { display: none; max-width: 480px; margin: 0 auto; background: #fff; min-height: 100vh; }
+  .header { padding: 16px 16px 12px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: #fff; z-index: 10; }
+  .header-left .company { font-size: 10px; font-weight: 600; color: #aaa; letter-spacing: 0.07em; text-transform: uppercase; }
+  .header-left .app-title { font-size: 18px; font-weight: 600; color: #1a1a1a; }
+  .header-date { font-size: 13px; color: #888; }
+  .tabs { display: flex; gap: 8px; padding: 12px 16px; background: #fff; border-bottom: 1px solid #f0f0f0; }
+  .tab { flex: 1; padding: 10px; font-size: 14px; font-weight: 500; border: 1px solid #e8e8e8; border-radius: 10px; background: transparent; color: #888; cursor: pointer; transition: all 0.15s; }
+  .tab.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  .content { padding-bottom: 100px; }
+
+  /* ---- Steps bar ---- */
+  .steps-bar { display: flex; align-items: center; padding: 16px 16px 12px; }
+  .step-dot { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid #e0e0e0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #bbb; background: #fff; flex-shrink: 0; cursor: pointer; transition: all 0.15s; }
+  .step-dot.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  .step-dot.done { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
+  .step-line { flex: 1; height: 1px; background: #f0f0f0; }
+  .step-line.done { background: #a5d6a7; }
+  .step-panel { display: none; padding: 0 16px; }
+  .step-panel.active { display: block; }
+  .step-title { font-size: 22px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
+  .step-sub { font-size: 13px; color: #888; margin-bottom: 20px; }
+
+  /* ---- Legs ---- */
+  .legs-list { margin-bottom: 14px; }
+  .leg-item { display: flex; align-items: center; justify-content: space-between; padding: 13px 14px; background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 12px; margin-bottom: 8px; }
+  .leg-route { font-size: 14px; font-weight: 600; color: #2e7d32; }
+  .leg-meta { font-size: 12px; color: #4caf50; margin-top: 2px; }
+  .leg-remove { background: none; border: none; font-size: 18px; color: #4caf50; cursor: pointer; opacity: 0.7; padding: 0 0 0 10px; flex-shrink: 0; }
+  .add-trip-btn { width: 100%; padding: 15px; font-size: 15px; font-weight: 500; border: 1.5px dashed #d0d0d0; border-radius: 12px; background: transparent; color: #888; cursor: pointer; margin-bottom: 18px; }
+  .add-trip-btn:active { background: #f5f5f5; }
+
+  /* ---- Location picker ---- */
+  .loc-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+  .loc-btn { width: 100%; padding: 15px 14px; text-align: left; background: #f8f8f8; border: 1px solid #eee; border-radius: 12px; cursor: pointer; transition: all 0.1s; }
+  .loc-btn:active { background: #f0f0f0; }
+  .loc-btn-name { font-size: 16px; font-weight: 600; color: #1a1a1a; }
+  .loc-btn-addr { font-size: 12px; color: #888; margin-top: 3px; }
+  .loc-btn.other { border-style: dashed; }
+  .back-link { font-size: 13px; color: #1976d2; cursor: pointer; text-decoration: underline; margin-bottom: 16px; display: inline-block; background: none; border: none; padding: 0; }
+
+  /* ---- Custom form ---- */
+  .custom-form { background: #f8f8f8; border: 1px solid #eee; border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+  .custom-form .cfield { margin-bottom: 14px; }
+  .custom-form .cfield:last-child { margin-bottom: 0; }
+  .custom-form label { display: block; font-size: 13px; color: #666; margin-bottom: 5px; }
+  .custom-form input { width: 100%; padding: 12px; font-size: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background: #fff; font-family: inherit; outline: none; }
+  .custom-form input:focus { border-color: #1a1a1a; }
+  .custom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .use-custom-btn { width: 100%; padding: 14px; font-size: 15px; font-weight: 600; background: #1a1a1a; color: #fff; border: none; border-radius: 12px; cursor: pointer; }
+
+  /* ---- Fields ---- */
+  .field { margin-bottom: 18px; }
+  .field label { display: block; font-size: 13px; color: #666; margin-bottom: 6px; }
+  .field input, .field textarea { width: 100%; padding: 14px 12px; font-size: 16px; border: 1px solid #e0e0e0; border-radius: 12px; background: #fafafa; color: #1a1a1a; font-family: inherit; outline: none; -webkit-appearance: none; }
+  .field input:focus, .field textarea:focus { border-color: #1a1a1a; background: #fff; }
+  .field textarea { resize: none; height: 80px; }
+  .field-hint { font-size: 12px; color: #aaa; margin-top: 5px; }
+
+  /* ---- Review ---- */
+  .review-leg { background: #f8f8f8; border-radius: 12px; padding: 13px 14px; margin-bottom: 8px; border: 1px solid #eee; }
+  .review-leg-route { font-size: 15px; font-weight: 600; color: #1a1a1a; }
+  .review-leg-meta { font-size: 12px; color: #888; margin-top: 3px; }
+  .review-section-label { font-size: 11px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 0.07em; margin: 20px 0 10px; }
+  .totals-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 4px; }
+  .total-box { background: #e3f2fd; border: 1px solid #90caf9; border-radius: 12px; padding: 14px 12px; }
+  .total-box-label { font-size: 12px; color: #1565c0; margin-bottom: 6px; }
+  .total-box input { width: 100%; background: transparent; border: none; border-bottom: 1px solid #90caf9; font-size: 26px; font-weight: 600; color: #1565c0; font-family: inherit; padding: 0 0 4px; outline: none; }
+  .total-box-unit { font-size: 11px; color: #1976d2; opacity: 0.7; margin-top: 5px; }
+  .odo-box { background: #f8f8f8; border: 1px solid #eee; border-radius: 12px; overflow: hidden; margin-bottom: 4px; }
+  .odo-row { display: flex; align-items: center; justify-content: space-between; padding: 13px 14px; border-bottom: 1px solid #f0f0f0; }
+  .odo-row:last-child { border-bottom: none; }
+  .odo-left { }
+  .odo-label { font-size: 13px; color: #666; }
+  .odo-tag { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; margin-top: 4px; }
+  .odo-tag.carried { background: #e8f5e9; color: #2e7d32; }
+  .odo-tag.estimated { background: #fff8e1; color: #f57f17; }
+  .odo-right { display: flex; align-items: center; gap: 6px; }
+  .odo-right input { width: 110px; text-align: right; background: transparent; border: none; border-bottom: 1px solid #ddd; font-size: 17px; font-weight: 600; color: #1a1a1a; font-family: inherit; padding: 2px 0; outline: none; }
+  .odo-unit { font-size: 13px; color: #aaa; }
+
+  /* ---- Checklist ---- */
+  .checklist { display: flex; flex-direction: column; gap: 10px; }
+  .check-item { display: flex; align-items: center; gap: 14px; padding: 15px 14px; background: #f8f8f8; border-radius: 12px; font-size: 15px; color: #1a1a1a; cursor: pointer; border: 1px solid #eee; user-select: none; transition: all 0.1s; }
+  .check-item.checked { border-color: #a5d6a7; background: #e8f5e9; color: #2e7d32; }
+  .check-item input[type=checkbox] { width: 22px; height: 22px; cursor: pointer; accent-color: #2e7d32; flex-shrink: 0; }
+  .check-all-btn { width: 100%; padding: 13px; font-size: 14px; font-weight: 500; border: 1px solid #e0e0e0; border-radius: 12px; background: transparent; color: #666; cursor: pointer; margin-bottom: 14px; }
+  .check-all-btn:active { background: #f5f5f5; }
+
+  /* ---- Nav bar ---- */
+  .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 12px 16px; background: #fff; border-top: 1px solid #f0f0f0; display: flex; gap: 10px; max-width: 480px; margin: 0 auto; }
+  .btn-back { flex: 0 0 80px; padding: 15px; font-size: 15px; font-weight: 500; border: 1px solid #e0e0e0; border-radius: 12px; background: transparent; color: #666; cursor: pointer; }
+  .btn-next { flex: 1; padding: 15px; font-size: 16px; font-weight: 600; background: #1a1a1a; color: #fff; border: none; border-radius: 12px; cursor: pointer; transition: opacity 0.15s; }
+  .btn-next:disabled { opacity: 0.3; }
+  .btn-next:active { opacity: 0.8; }
+
+  /* ---- Saving indicator ---- */
+  .saving-bar { display: none; position: fixed; top: 0; left: 0; right: 0; background: #1565c0; color: #fff; font-size: 13px; font-weight: 500; text-align: center; padding: 8px; z-index: 100; max-width: 480px; margin: 0 auto; }
+  .saving-bar.show { display: block; }
+
+  /* ---- History ---- */
+  .history-wrap { padding: 16px; }
+  .log-entry { background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .log-entry-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .log-date { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+  .log-route { font-size: 13px; color: #888; margin-top: 3px; }
+  .badge { font-size: 11px; padding: 4px 9px; border-radius: 6px; background: #e8f5e9; color: #2e7d32; font-weight: 600; }
+  .badge.fail { background: #ffebee; color: #c62828; }
+  .log-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat { text-align: center; padding: 8px 4px; background: #f8f8f8; border-radius: 8px; }
+  .stat-val { font-size: 15px; font-weight: 600; color: #1a1a1a; }
+  .stat-lbl { font-size: 10px; color: #aaa; margin-top: 2px; }
+  .delete-btn { font-size: 12px; color: #e57373; cursor: pointer; background: none; border: none; padding: 4px 8px; margin-top: 4px; }
+  .empty { text-align: center; padding: 60px 20px; color: #bbb; font-size: 15px; line-height: 1.6; }
+
+  /* ---- Success ---- */
+  .success-screen { text-align: center; padding: 48px 16px; }
+  .success-icon { width: 72px; height: 72px; border-radius: 50%; background: #e8f5e9; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 32px; }
+  .success-title { font-size: 24px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; }
+  .success-sub { font-size: 14px; color: #888; margin-bottom: 12px; line-height: 1.7; }
+  .success-sheet { font-size: 13px; color: #2e7d32; margin-bottom: 36px; }
+  .btn-new { width: 100%; padding: 16px; font-size: 16px; font-weight: 600; background: #1a1a1a; color: #fff; border: none; border-radius: 12px; cursor: pointer; }
+
+  /* ---- Toast ---- */
+  .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: #1a1a1a; color: #fff; padding: 10px 20px; border-radius: 10px; font-size: 13px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 200; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div id="login-screen">
+  <div class="login-logo">2740172 Ontario Inc.</div>
+  <div class="login-title">CVOR Driver Log</div>
+  <div class="login-sub">Ontario commercial vehicle record-keeping</div>
+  <div class="login-box">
+    <label>Password</label>
+    <input type="password" id="pw-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Sign in</button>
+    <div class="login-error" id="login-error">Incorrect password</div>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <div class="saving-bar" id="saving-bar">Saving to Google Sheets...</div>
+
+  <div class="header">
+    <div class="header-left">
+      <div class="company">2740172 Ontario Inc.</div>
+      <div class="app-title">CVOR Log</div>
+    </div>
+    <div class="header-date" id="today-date"></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('log')">New entry</button>
+    <button class="tab" onclick="showTab('history')">History</button>
+  </div>
+
+  <div class="content" id="tab-log">
+    <div class="steps-bar" id="steps-bar"></div>
+
+    <!-- Step 1 -->
+    <div class="step-panel active" id="step-1">
+      <div id="s1-main">
+        <div class="step-title">Build your day</div>
+        <div class="step-sub">Add each trip you made today</div>
+        <div class="legs-list" id="legs-list"></div>
+        <button class="add-trip-btn" onclick="showOriginPicker()">+ Add a trip</button>
+        <div class="field"><label>Date</label><input type="date" id="f-date"></div>
+        <div class="field"><label>Cargo (optional)</label><input type="text" id="f-cargo" placeholder="e.g. General freight, empty"></div>
+      </div>
+      <div id="s1-origin" style="display:none">
+        <div class="step-title">Where from?</div>
+        <div class="step-sub">Tap your starting location</div>
+        <div class="loc-grid" id="origin-grid"></div>
+        <button class="back-link" onclick="cancelAddTrip()">Cancel</button>
+      </div>
+      <div id="s1-dest" style="display:none">
+        <div class="step-title">Where to?</div>
+        <div class="step-sub" id="dest-sub"></div>
+        <div class="loc-grid" id="dest-grid"></div>
+        <button class="back-link" onclick="showOriginPicker()">Change starting location</button>
+      </div>
+      <div id="s1-custom" style="display:none">
+        <div class="step-title">Custom location</div>
+        <div class="step-sub" id="custom-sub"></div>
+        <div class="custom-form">
+          <div class="cfield"><label>Location name</label><input type="text" id="custom-name" placeholder="e.g. Mechanic on Dundas"></div>
+          <div class="custom-row">
+            <div class="cfield"><label>Distance (km)</label><input type="number" id="custom-km" inputmode="numeric" placeholder="0"></div>
+            <div class="cfield"><label>Driving hrs</label><input type="number" id="custom-hrs" inputmode="decimal" step="0.5" placeholder="0"></div>
+          </div>
+        </div>
+        <button class="use-custom-btn" onclick="confirmCustom()">Add this trip</button>
+        <br><button class="back-link" style="margin-top:12px" onclick="showDestPicker()">Back</button>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step-panel" id="step-2">
+      <div class="step-title">Shift details</div>
+      <div class="step-sub" id="step2-sub"></div>
+      <div class="field"><label>Shift start</label><input type="time" id="f-shift-start"></div>
+      <div class="field"><label>Shift end</label><input type="time" id="f-shift-end"></div>
+      <div class="field"><label>Notes (optional)</label><textarea id="f-notes" placeholder="Delays, traffic, weather, etc."></textarea></div>
+    </div>
+
+    <!-- Step 3: Review -->
+    <div class="step-panel" id="step-3">
+      <div class="step-title">Confirm your day</div>
+      <div class="step-sub">Tap any number to adjust</div>
+      <div id="review-legs"></div>
+      <div class="review-section-label">Totals</div>
+      <div class="totals-grid">
+        <div class="total-box">
+          <div class="total-box-label">Total km</div>
+          <input type="number" id="r-total-km" inputmode="numeric">
+          <div class="total-box-unit">kilometres</div>
+        </div>
+        <div class="total-box">
+          <div class="total-box-label">Driving hours</div>
+          <input type="number" id="r-total-hrs" inputmode="decimal" step="0.5">
+          <div class="total-box-unit">hours</div>
+        </div>
+      </div>
+      <div class="review-section-label">Odometer</div>
+      <div class="odo-box">
+        <div class="odo-row">
+          <div class="odo-left">
+            <div class="odo-label">Start</div>
+            <div id="odo-start-tag"></div>
+          </div>
+          <div class="odo-right">
+            <input type="number" id="r-odo-start" inputmode="numeric">
+            <span class="odo-unit">km</span>
+          </div>
+        </div>
+        <div class="odo-row">
+          <div class="odo-left">
+            <div class="odo-label">End</div>
+            <div id="odo-end-tag"></div>
+          </div>
+          <div class="odo-right">
+            <input type="number" id="r-odo-end" inputmode="numeric">
+            <span class="odo-unit">km</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Inspection -->
+    <div class="step-panel" id="step-4">
+      <div class="step-title">Trip inspection</div>
+      <button class="check-all-btn" onclick="checkAll()">Mark all as passed</button>
+      <div class="checklist" id="checklist"></div>
+    </div>
+
+    <!-- Done -->
+    <div class="step-panel" id="step-5">
+      <div class="success-screen">
+        <div class="success-icon">✓</div>
+        <div class="success-title">Entry saved</div>
+        <div class="success-sub" id="success-summary"></div>
+        <div class="success-sheet" id="success-sheet"></div>
+        <button class="btn-new" onclick="startNew()">Log another day</button>
+      </div>
+    </div>
+
+    <div class="nav-bar" id="nav-bar">
+      <button class="btn-back" id="btn-back" onclick="goBack()">Back</button>
+      <button class="btn-next" id="btn-next" onclick="goNext()">Next</button>
+    </div>
+  </div>
+
+  <div class="content" id="tab-history" style="display:none">
+    <div class="history-wrap" id="history-list"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ---- Config ----
+const PASSWORD = '6620';
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxyoti7E_ABxeE6eWwjYfSblxvUQBOK9nbTiCIK90MNGbHao4qER-Cjq0EAXDJndM_7qQ/exec';
+
+const LOCS = [
+  {key:'parking', name:'Parking Spot',   addr:'550 Kipling Ave'},
+  {key:'oft',     name:'Food Terminal',  addr:'165 The Queensway'},
+  {key:'fresh',   name:'Fresh Avenue',   addr:'2294 Bloor St W'},
+  {key:'dave',    name:'Dave Young',     addr:'494 Eglinton Ave W'},
+  {key:'parkway', name:'Parkway Market', addr:'881 Eglinton Ave W'},
+];
+const DIST = {
+  'parking-oft':[3,0.25],'parking-fresh':[8,0.5],'parking-dave':[7,0.5],'parking-parkway':[6,0.5],
+  'oft-fresh':[7,0.5],'oft-dave':[8,0.5],'oft-parkway':[7,0.5],
+  'fresh-dave':[3,0.25],'fresh-parkway':[2,0.25],'dave-parkway':[1,0.25],
+};
+const CHECKS = ['Air brakes / brake lines','Tires & wheels','Lights & reflectors','Fuel & fluid levels','Mirrors & windshield','Coupling & fifth wheel','Emergency equipment','Cargo secured','Horn & wipers','Exhaust system'];
+
+function getDist(a,b){return DIST[a+'-'+b]||DIST[b+'-'+a]||null;}
+function getLoc(key){return LOCS.find(l=>l.key===key);}
+function localDate(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function show(id){document.getElementById(id).style.display='block';}
+function hide(id){document.getElementById(id).style.display='none';}
+
+// ---- Auth ----
+function doLogin(){
+  const pw = document.getElementById('pw-input').value;
+  if(pw === PASSWORD){
+    sessionStorage.setItem('cvor_auth','1');
+    hide('login-screen');
+    show('app');
+    initApp();
+  } else {
+    document.getElementById('login-error').style.display='block';
+    document.getElementById('pw-input').value='';
+    document.getElementById('pw-input').focus();
+  }
+}
+
+// ---- State ----
+let legs=[], pickingOrigin=null, pickingDest=null, currentStep=1, lastOdoEnd=null;
+const TOTAL_STEPS=4;
+
+async function initApp(){
+  document.getElementById('today-date').textContent=new Date().toLocaleDateString('en-CA',{weekday:'short',month:'short',day:'numeric'});
+  document.getElementById('f-date').value=localDate();
+  buildChecklist(); buildStepsBar(); updateNav();
+  const entries=loadEntries();
+  if(entries.length&&entries[0].odoEnd) lastOdoEnd=parseFloat(entries[0].odoEnd);
+}
+
+// ---- Storage (localStorage for history) ----
+function loadEntries(){try{return JSON.parse(localStorage.getItem('cvor_entries')||'[]');}catch{return[];}}
+function saveEntries(entries){localStorage.setItem('cvor_entries',JSON.stringify(entries));}
+
+// ---- Trip builder ----
+function showOriginPicker(){
+  show('s1-origin'); hide('s1-main'); hide('s1-dest'); hide('s1-custom');
+  document.getElementById('origin-grid').innerHTML=
+    [...LOCS,{key:'other',name:'Other location',addr:'Custom — enter name & distance'}].map(l=>`
+      <button class="loc-btn${l.key==='other'?' other':''}" onclick="selectOrigin('${l.key}')">
+        <div class="loc-btn-name">${l.name}</div>
+        <div class="loc-btn-addr">${l.addr}</div>
+      </button>`).join('');
+  updateNav();
+}
+
+function selectOrigin(key){
+  if(key==='other'){pickingOrigin={key:'other',name:''};showCustomForm('origin');return;}
+  pickingOrigin=getLoc(key); showDestPicker();
+}
+
+function showDestPicker(){
+  show('s1-dest'); hide('s1-origin'); hide('s1-custom'); hide('s1-main');
+  document.getElementById('dest-sub').textContent=`From ${pickingOrigin.name} — where to?`;
+  const others=LOCS.filter(l=>l.key!==pickingOrigin.key);
+  document.getElementById('dest-grid').innerHTML=
+    [...others,{key:'other',name:'Other location',addr:'Custom — enter name & distance'}].map(l=>`
+      <button class="loc-btn${l.key==='other'?' other':''}" onclick="selectDest('${l.key}')">
+        <div class="loc-btn-name">${l.name}</div>
+        <div class="loc-btn-addr">${l.addr||''}</div>
+      </button>`).join('');
+  updateNav();
+}
+
+function selectDest(key){
+  if(key==='other'){pickingDest={key:'other',name:''};showCustomForm('dest');return;}
+  pickingDest=getLoc(key);
+  const d=getDist(pickingOrigin.key,pickingDest.key);
+  addLeg(pickingOrigin.name,pickingDest.name,d?d[0]:null,d?d[1]:null);
+}
+
+function showCustomForm(side){
+  hide('s1-dest'); hide('s1-origin'); show('s1-custom'); hide('s1-main');
+  document.getElementById('custom-sub').textContent=side==='origin'
+    ?'Enter the custom starting location'
+    :`From ${pickingOrigin.name} — enter destination`;
+  document.getElementById('custom-name').value='';
+  document.getElementById('custom-km').value='';
+  document.getElementById('custom-hrs').value='';
+  setTimeout(()=>document.getElementById('custom-name').focus(),150);
+  updateNav();
+}
+
+function confirmCustom(){
+  const name=document.getElementById('custom-name').value.trim();
+  const km=parseFloat(document.getElementById('custom-km').value)||null;
+  const hrs=parseFloat(document.getElementById('custom-hrs').value)||null;
+  if(!name){showToast('Enter a location name');return;}
+  if(pickingOrigin?.key==='other'&&!pickingDest){
+    pickingOrigin={key:'other',name}; showDestPicker();
+  } else {
+    addLeg(pickingOrigin.name,name,km,hrs);
+  }
+}
+
+function addLeg(fromName,toName,km,hrs){
+  legs.push({fromName,toName,km,hrs});
+  pickingOrigin=null; pickingDest=null;
+  show('s1-main'); hide('s1-origin'); hide('s1-dest'); hide('s1-custom');
+  renderLegs(); updateNav();
+}
+
+function cancelAddTrip(){
+  pickingOrigin=null; pickingDest=null;
+  show('s1-main'); hide('s1-origin'); hide('s1-dest'); hide('s1-custom');
+  updateNav();
+}
+
+function removeLeg(i){legs.splice(i,1);renderLegs();updateNav();}
+
+function renderLegs(){
+  document.getElementById('legs-list').innerHTML=legs.map((l,i)=>`
+    <div class="leg-item">
+      <div>
+        <div class="leg-route">${l.fromName} → ${l.toName}</div>
+        <div class="leg-meta">${[l.km!=null?l.km+' km':null,l.hrs!=null?l.hrs+' hrs':null].filter(Boolean).join(' · ')||'No distance recorded'}</div>
+      </div>
+      <button class="leg-remove" onclick="removeLeg(${i})">✕</button>
+    </div>`).join('');
+}
+
+// ---- Review ----
+function renderReview(){
+  const totalKm=legs.reduce((s,l)=>s+(l.km||0),0);
+  const totalHrs=Math.round(legs.reduce((s,l)=>s+(l.hrs||0),0)*4)/4;
+  document.getElementById('review-legs').innerHTML=legs.map(l=>`
+    <div class="review-leg">
+      <div class="review-leg-route">${l.fromName} → ${l.toName}</div>
+      <div class="review-leg-meta">${[l.km!=null?l.km+' km':null,l.hrs!=null?l.hrs+' hrs driving':null].filter(Boolean).join(' · ')||'No distance recorded'}</div>
+    </div>`).join('');
+  document.getElementById('r-total-km').value=totalKm||'';
+  document.getElementById('r-total-hrs').value=totalHrs||'';
+  const estEnd=lastOdoEnd!=null&&totalKm?Math.round(lastOdoEnd+totalKm):null;
+  document.getElementById('r-odo-start').value=lastOdoEnd!=null?lastOdoEnd:'';
+  document.getElementById('r-odo-end').value=estEnd!=null?estEnd:'';
+  document.getElementById('odo-start-tag').innerHTML=lastOdoEnd!=null
+    ?'<span class="odo-tag carried">Carried from last entry</span>'
+    :'<span style="font-size:11px;color:#bbb">Enter manually</span>';
+  document.getElementById('odo-end-tag').innerHTML=estEnd!=null
+    ?'<span class="odo-tag estimated">Estimated — enter actual</span>'
+    :'<span style="font-size:11px;color:#bbb">Enter manually</span>';
+}
+
+// ---- Steps ----
+function buildStepsBar(){
+  const bar=document.getElementById('steps-bar');
+  bar.innerHTML='';
+  ['Trips','Shift','Review','Inspect'].forEach((lbl,i)=>{
+    const n=i+1;
+    const dot=document.createElement('div');
+    dot.className='step-dot'+(n===currentStep?' active':n<currentStep?' done':'');
+    dot.textContent=n<currentStep?'✓':n;
+    dot.title=lbl;
+    dot.onclick=()=>{if(n<currentStep)goToStep(n);};
+    bar.appendChild(dot);
+    if(n<TOTAL_STEPS){const line=document.createElement('div');line.className='step-line'+(n<currentStep?' done':'');bar.appendChild(line);}
+  });
+}
+
+function isPicking(){
+  return document.getElementById('s1-origin').style.display!=='none'
+    ||document.getElementById('s1-dest').style.display!=='none'
+    ||document.getElementById('s1-custom').style.display!=='none';
+}
+
+function validateStep(step){
+  if(step===1){
+    if(isPicking()){showToast('Finish adding your trip first');return false;}
+    if(!legs.length){showToast('Add at least one trip');return false;}
+  }
+  return true;
+}
+
+function goToStep(n){
+  document.getElementById('step-'+currentStep).classList.remove('active');
+  currentStep=n;
+  document.getElementById('step-'+currentStep).classList.add('active');
+  if(n===2){
+    const totalKm=legs.reduce((s,l)=>s+(l.km||0),0);
+    document.getElementById('step2-sub').textContent=`${legs.length} trip${legs.length>1?'s':''} · ${totalKm} km estimated`;
+  }
+  if(n===3) renderReview();
+  buildStepsBar(); updateNav(); window.scrollTo(0,0);
+}
+
+function goNext(){
+  if(currentStep===TOTAL_STEPS){saveEntry();return;}
+  if(!validateStep(currentStep))return;
+  goToStep(currentStep+1);
+}
+
+function goBack(){
+  if(currentStep===1&&isPicking()){cancelAddTrip();return;}
+  if(currentStep>1)goToStep(currentStep-1);
+}
+
+function updateNav(){
+  const isDone=currentStep>TOTAL_STEPS;
+  document.getElementById('nav-bar').style.display=isDone?'none':'flex';
+  document.getElementById('btn-back').style.display=(currentStep===1&&!isPicking())?'none':'block';
+  const btn=document.getElementById('btn-next');
+  btn.textContent=currentStep===TOTAL_STEPS?'Save entry':'Next';
+  btn.disabled=currentStep===1&&!legs.length&&!isPicking();
+}
+
+// ---- Save ----
+async function saveEntry(){
+  const checks=CHECKS.map((c,i)=>({item:c,passed:document.getElementById('ck-'+i).checked}));
+  const entry={
+    id:Date.now(),
+    date:document.getElementById('f-date').value||localDate(),
+    legs:[...legs],
+    cargo:document.getElementById('f-cargo').value.trim(),
+    odoStart:document.getElementById('r-odo-start').value,
+    odoEnd:document.getElementById('r-odo-end').value,
+    shiftStart:document.getElementById('f-shift-start').value,
+    shiftEnd:document.getElementById('f-shift-end').value,
+    totalKm:parseFloat(document.getElementById('r-total-km').value)||null,
+    totalHrs:parseFloat(document.getElementById('r-total-hrs').value)||null,
+    notes:document.getElementById('f-notes').value.trim(),
+    checks,
+    allPassed:checks.every(c=>c.passed)
+  };
+
+  // Save locally first
+  const entries=loadEntries();
+  entries.unshift(entry);
+  saveEntries(entries);
+  lastOdoEnd=entry.odoEnd?parseFloat(entry.odoEnd):lastOdoEnd;
+
+  // Show success
+  document.getElementById('success-summary').innerHTML=
+    `${legs.length} trip${legs.length>1?'s':''} logged<br>${entry.totalKm||'?'} km · ${entry.totalHrs||'?'} hrs driving`;
+  document.getElementById('success-sheet').textContent='';
+  document.getElementById('step-'+currentStep).classList.remove('active');
+  currentStep=TOTAL_STEPS+1;
+  document.getElementById('step-5').classList.add('active');
+  updateNav(); window.scrollTo(0,0);
+
+  // Post to Google Sheets in background
+  const savingBar=document.getElementById('saving-bar');
+  savingBar.classList.add('show');
+  try{
+    await fetch(SHEET_URL,{
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(entry)
+    });
+    document.getElementById('success-sheet').textContent='✓ Saved to Google Sheets';
+  } catch(e){
+    document.getElementById('success-sheet').textContent='Could not reach Google Sheets — entry saved locally';
+  } finally {
+    savingBar.classList.remove('show');
+  }
+}
+
+async function startNew(){
+  legs=[]; currentStep=1; pickingOrigin=null; pickingDest=null;
+  show('s1-main'); hide('s1-origin'); hide('s1-dest'); hide('s1-custom');
+  ['f-cargo','f-shift-start','f-shift-end','f-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-date').value=localDate();
+  renderLegs(); buildChecklist();
+  document.getElementById('step-5').classList.remove('active');
+  document.getElementById('step-1').classList.add('active');
+  buildStepsBar(); updateNav(); window.scrollTo(0,0);
+}
+
+function buildChecklist(){
+  const cl=document.getElementById('checklist');
+  cl.innerHTML='';
+  CHECKS.forEach((c,i)=>{
+    const el=document.createElement('label');
+    el.className='check-item';
+    el.innerHTML=`<input type="checkbox" id="ck-${i}" onchange="this.parentElement.classList.toggle('checked',this.checked)"><span>${c}</span>`;
+    cl.appendChild(el);
+  });
+}
+function checkAll(){document.querySelectorAll('#checklist input[type=checkbox]').forEach(el=>{el.checked=true;el.parentElement.classList.add('checked');});}
+
+function showHistory(){
+  const entries=loadEntries();
+  const list=document.getElementById('history-list');
+  if(!entries.length){list.innerHTML='<div class="empty">No entries yet.<br>Log your first trip!</div>';return;}
+  list.innerHTML=entries.map(e=>{
+    const routes=(e.legs||[]).map(l=>`${l.fromName} → ${l.toName}`).join(', ')||'—';
+    return `<div class="log-entry">
+      <div class="log-entry-header">
+        <div>
+          <div class="log-date">${formatDate(e.date)}</div>
+          <div class="log-route">${routes}</div>
+          ${e.cargo?`<div class="log-route" style="margin-top:2px">${e.cargo}</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span class="badge${e.allPassed?'':' fail'}">${e.allPassed?'Inspection OK':'Issues'}</span>
+          <button class="delete-btn" onclick="deleteEntry(${e.id})">Delete</button>
+        </div>
+      </div>
+      <div class="log-stats">
+        <div class="stat"><div class="stat-val">${e.totalHrs||'—'}</div><div class="stat-lbl">Driving hrs</div></div>
+        <div class="stat"><div class="stat-val">${e.totalKm?e.totalKm+'km':'—'}</div><div class="stat-lbl">Distance</div></div>
+        <div class="stat"><div class="stat-val">${e.shiftStart&&e.shiftEnd?e.shiftStart+'–'+e.shiftEnd:'—'}</div><div class="stat-lbl">Shift</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function deleteEntry(id){
+  const entries=loadEntries().filter(e=>e.id!==id);
+  saveEntries(entries);
+  showHistory();
+}
+
+function formatDate(d){return new Date(d+'T12:00:00').toLocaleDateString('en-CA',{weekday:'short',month:'short',day:'numeric',year:'numeric'});}
+
+function showTab(tab){
+  document.getElementById('tab-log').style.display=tab==='log'?'block':'none';
+  document.getElementById('tab-history').style.display=tab==='history'?'block':'none';
+  document.getElementById('nav-bar').style.display=tab==='log'&&currentStep<=TOTAL_STEPS?'flex':'none';
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',(tab==='log'&&i===0)||(tab==='history'&&i===1)));
+  if(tab==='history') showHistory();
+}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+// ---- Boot ----
+if(sessionStorage.getItem('cvor_auth')==='1'){
+  hide('login-screen'); show('app'); initApp();
+} else {
+  document.getElementById('pw-input').focus();
+}
+</script>
+</body>
+</html>
