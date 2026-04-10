@@ -204,7 +204,7 @@
         <button class="back-link" onclick="cancelAddTrip()">Cancel</button>
       </div>
       <div id="s1-dest" style="display:none">
-        <div class="step-title">Where to?</div>
+        <div class="step-title">Where to next?</div>
         <div class="step-sub" id="dest-sub"></div>
         <div class="loc-grid" id="dest-grid"></div>
         <button class="back-link" onclick="showOriginPicker()">Change starting location</button>
@@ -320,9 +320,9 @@ const LOCS = [
   {key:'parkway', name:'Parkway Market', addr:'881 Eglinton Ave W'},
 ];
 const DIST = {
-  'parking-oft':[3,0.25],'parking-fresh':[8,0.5],'parking-dave':[7,0.5],'parking-parkway':[6,0.5],
-  'oft-fresh':[7,0.5],'oft-dave':[8,0.5],'oft-parkway':[7,0.5],
-  'fresh-dave':[3,0.25],'fresh-parkway':[2,0.25],'dave-parkway':[1,0.25],
+  'parking-oft':[5.5,0.25],'parking-fresh':[8,0.25],'parking-dave':[28,0.5],'parking-parkway':[27,0.5],
+  'oft-fresh':[4,0.25],'oft-dave':[31,0.5],'oft-parkway':[30,0.5],
+  'fresh-dave':[11,0.5],'fresh-parkway':[10,0.5],'dave-parkway':[1,0.25],
 };
 const CHECKS = ['Air brakes / brake lines','Tires & wheels','Lights & reflectors','Fuel & fluid levels','Mirrors & windshield','Coupling & fifth wheel','Emergency equipment','Cargo secured','Horn & wipers','Exhaust system'];
 
@@ -387,7 +387,7 @@ function selectOrigin(key){
 
 function showDestPicker(){
   show('s1-dest'); hide('s1-origin'); hide('s1-custom'); hide('s1-main');
-  document.getElementById('dest-sub').textContent=`From ${pickingOrigin.name} — where to?`;
+  document.getElementById('dest-sub').innerHTML=`<span style="display:inline-block;background:#e8f5e9;color:#2e7d32;font-weight:600;padding:4px 10px;border-radius:6px;font-size:13px;">Starting from: ${pickingOrigin.name}</span>`;
   const others=LOCS.filter(l=>l.key!==pickingOrigin.key);
   document.getElementById('dest-grid').innerHTML=
     [...others,{key:'other',name:'Other location',addr:'Custom — enter name & distance'}].map(l=>`
