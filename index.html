@@ -608,6 +608,9 @@ async function startNew(){
   renderLegs(); buildChecklist();
   document.getElementById('step-5').classList.remove('active');
   document.getElementById('step-1').classList.add('active');
+  // Refresh lastOdoEnd from storage in case it was just saved
+  const entries=loadEntries();
+  if(entries.length&&entries[0].odoEnd) lastOdoEnd=parseFloat(entries[0].odoEnd);
   buildStepsBar(); updateNav(); window.scrollTo(0,0);
 }
 
